@@ -14,15 +14,15 @@
   },
   "dependencies": {
     "@google/genai": "^1.29.1",
+    "@vitejs/plugin-react": "^5.0.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
     "playwright": "^1.40.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0",
     "electron": "^26.0.0",
     "electron-builder": "^24.6.0",
     "electron-packager": "^17.1.0"
