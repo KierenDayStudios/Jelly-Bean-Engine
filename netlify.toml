@@ -1,0 +1,14 @@
+[build]
+  command = "npm run dist"
+  publish = "dist"
+
+[context.production.environment]
+  NODE_ENV = "production"
+
+# You can add redirects or headers below if needed
+
+[[redirects]]
+  from = "/export-demo.html"
+  to = "/export-demo.html"
+  status = 200
+  force = true

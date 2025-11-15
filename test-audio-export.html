@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Audio System Test</title>
+  <style>body{background:#111;color:#ddd;font-family:sans-serif;padding:20px}button,input{margin:6px}</style>
+</head>
+<body>
+  <h1>Audio System Smoke Test</h1>
+  <p>This page tests the AudioContext, master/music gain nodes, resume-on-gesture, play/stop and volume controls using Oscillators (no audio files required).</p>
+  <div>
+    <button id="resume">Resume Audio (or interact anywhere)</button>
+    <button id="play-sound">Play Sound (short beep)</button>
+    <button id="stop-sound">Stop Sound</button>
+    <button id="play-music">Play Music (loop)</button>
+    <button id="stop-music">Stop Music</button>
+  </div>
+  <div style="margin-top:12px">
+    <label>Master Volume: <input id="master" type="range" min="0" max="1" step="0.01" value="1"></label>
+    <label style="margin-left:12px">Music Volume: <input id="music" type="range" min="0" max="1" step="0.01" value="1"></label>
+  </div>
+  <div id="log" style="margin-top:12px;color:#9fc;font-family:monospace"></div>
+
+  <script>
+    const logEl = document.getElementById('log');
+    function log(...args){ logEl.textContent = args.join(' '); console.log(...args); }
+
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const masterGain = audioContext.createGain(); masterGain.gain.value = 1; masterGain.connect(audioContext.destination);
+    const musicGain = audioContext.createGain(); musicGain.gain.value = 1; musicGain.connect(masterGain);
+    const playingInstances = {};
+    let currentMusic = null;
+
+    const resumeAudio = () => {
+      if (audioContext.state === 'suspended') audioContext.resume().then(() => log('AudioContext resumed')).catch(e => log('Resume failed', e));
+    };
+    window.addEventListener('pointerdown', resumeAudio);
+    window.addEventListener('keydown', resumeAudio);
+
+    function playBeep({duration=0.2, frequency=880, volume=1, name='beep'}={}){
+      const osc = audioContext.createOscillator(); osc.type = 'sine'; osc.frequency.value = frequency;
+      const g = audioContext.createGain(); g.gain.value = volume;
+      osc.connect(g); g.connect(masterGain);
+      osc.start();
+      if (!playingInstances[name]) playingInstances[name]=[];
+      const ent = {osc, gain:g}; playingInstances[name].push(ent);
+      osc.stop(audioContext.currentTime + duration);
+      osc.onended = () => {
+        const arr = playingInstances[name]; if(!arr) return; const idx = arr.indexOf(ent); if(idx>=0) arr.splice(idx,1); if(arr.length===0) delete playingInstances[name];
+        log('Beep ended');
+      };
+      log('Beep started');
+    }
+
+    function stopSound(name){ const arr = playingInstances[name]; if(!arr) return; arr.forEach(e=>{ try{ e.osc.stop(); }catch(e){} }); delete playingInstances[name]; log('Stopped', name); }
+
+    function playMusic({frequency=220, volume=0.5}={}){
+      if (currentMusic) return; const osc = audioContext.createOscillator(); osc.type='sawtooth'; osc.frequency.value = frequency;
+      const g = audioContext.createGain(); g.gain.value = volume; osc.connect(g); g.connect(musicGain);
+      osc.start(); currentMusic = {osc, gain:g}; log('Music started');
+    }
+    function stopMusic(){ if(!currentMusic) return; try{ currentMusic.osc.stop(); }catch(e){} currentMusic=null; log('Music stopped'); }
+
+    document.getElementById('resume').addEventListener('click', ()=>{ resumeAudio(); log('Resume clicked'); });
+    document.getElementById('play-sound').addEventListener('click', ()=> playBeep({}));
+    document.getElementById('stop-sound').addEventListener('click', ()=> stopSound('beep'));
+    document.getElementById('play-music').addEventListener('click', ()=> playMusic({}));
+    document.getElementById('stop-music').addEventListener('click', ()=> stopMusic());
+
+    document.getElementById('master').addEventListener('input', (e)=>{ masterGain.gain.value = Number(e.target.value); log('Master volume', e.target.value); });
+    document.getElementById('music').addEventListener('input', (e)=>{ musicGain.gain.value = Number(e.target.value); log('Music volume', e.target.value); });
+
+    log('Test page ready. Interact to enable audio.');
+  </script>
+</body>
+</html>
