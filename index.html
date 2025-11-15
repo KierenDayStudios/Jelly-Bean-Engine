@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jelly Bean Engine V1.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.1"
+  }
+}
+</script>
+<style>
+  /* Ensure pixel art is rendered crisply */
+  img, canvas {
+    image-rendering: -moz-crisp-edges; /* Firefox */
+    image-rendering: -webkit-crisp-edges; /* Webkit (Chrome, Safari) */
+    image-rendering: pixelated; /* W3C standard */
+    image-rendering: crisp-edges;
+  }
+  
+  /* Landing page animations */
+  .hero-animation-container {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      opacity: 0.15;
+      filter: blur(1px);
+  }
+
+  .hero-animation-container img {
+      position: absolute;
+      transform-origin: center center;
+  }
+
+  .hero-player {
+      width: 64px;
+      height: 64px;
+      animation: move-player 20s linear infinite;
+  }
+  
+  .hero-turret {
+      width: 80px;
+      height: 80px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation: rotate-turret 10s linear infinite;
+  }
+  
+  .hero-bullet {
+      width: 16px;
+      height: 16px;
+      opacity: 0;
+      animation: shoot-bullet 3s linear infinite;
+  }
+
+  @keyframes move-player {
+      0% { top: 10%; left: 10%; transform: rotate(90deg); }
+      25% { top: 10%; left: 90%; transform: rotate(180deg); }
+      50% { top: 90%; left: 90%; transform: rotate(270deg); }
+      75% { top: 90%; left: 10%; transform: rotate(360deg); }
+      100% { top: 10%; left: 10%; transform: rotate(450deg); }
+  }
+
+  @keyframes rotate-turret {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  @keyframes shoot-bullet {
+      0%, 100% { opacity: 0; }
+      10% { opacity: 1; top: 50%; left: 50%; transform: translate(0, -200px); }
+      90% { opacity: 1; top: 50%; left: 50%; transform: translate(0, 200px); }
+  }
+
+  /* NEW STYLES */
+  .fade-in-section {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+  }
+  .fade-in-section.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .animated-headline span {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(-20px) scale(0.8);
+      animation: drop-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+  @keyframes drop-in {
+      to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+      }
+  }
+  .feature-content {
+      transition: opacity 0.4s ease-in-out;
+  }
+  .pulse-button {
+      animation: pulse-animation 2.5s infinite cubic-bezier(0.4, 0, 0.6, 1);
+  }
+  @keyframes pulse-animation {
+      0%, 100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      }
+      70% {
+          transform: scale(1.05);
+          box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+      }
+  }
+</style>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-black text-white">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

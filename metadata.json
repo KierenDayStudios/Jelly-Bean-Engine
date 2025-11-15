@@ -1,0 +1,5 @@
+{
+  "name": "Jelly Bean Engine V1.0",
+  "description": "A modern, visual 2D game engine inspired by GDevelop, designed to empower creators to build games without extensive code. It features a visual scene editor, an intuitive event system, and a real-time preview.",
+  "requestFramePermissions": []
+}

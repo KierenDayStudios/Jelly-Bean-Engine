@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Export Demo - Audio E2E</title>
+  <style>body{background:#111;color:#ddd;font-family:sans-serif;padding:20px}button,input{margin:6px}</style>
+</head>
+<body>
+  <h1>Export Demo - Audio E2E</h1>
+  <p>This page creates a synthesized AudioBuffer, registers it with the audio manager, and provides controls to exercise play_sound, play_music, stop_sound, stop_music, set_volume and is_sound_playing logic.</p>
+
+  <div>
+    <button id="resume">Resume Audio</button>
+    <button id="play-sound">Play Sound</button>
+    <button id="stop-sound">Stop Sound</button>
+    <button id="play-music">Play Music</button>
+    <button id="stop-music">Stop Music</button>
+    <button id="check-sound">Is Sound Playing?</button>
+  </div>
+  <div style="margin-top:12px">
+    <label>Master Volume: <input id="master" type="range" min="0" max="1" step="0.01" value="1"></label>
+    <label style="margin-left:12px">Music Volume: <input id="music" type="range" min="0" max="1" step="0.01" value="1"></label>
+  </div>
+  <pre id="log" style="margin-top:12px;color:#9fc;background:#000;padding:8px;border-radius:6px;max-width:800px;white-space:pre-wrap"></pre>
+
+  <script>
+    const logEl = document.getElementById('log');
+    function log(...args){ logEl.textContent = args.join(' '); console.log(...args); }
+
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const masterGain = audioContext.createGain(); masterGain.gain.value = 1; masterGain.connect(audioContext.destination);
+    const musicGain = audioContext.createGain(); musicGain.gain.value = 1; musicGain.connect(masterGain);
+    const playingInstances = {}; // name -> array of {source, gain}
+    let currentMusic = null;
+
+    const resumeAudio = () => {
+      if (audioContext.state === 'suspended') audioContext.resume().then(()=>log('AudioContext resumed')).catch(e => log('resume failed', e));
+    };
+    window.addEventListener('pointerdown', resumeAudio);
+    window.addEventListener('keydown', resumeAudio);
+
+    function playSoundByName(name, {loop=false, volume=1} = {}){
+      const buffer = sounds[name];
+      if(!buffer) { log('No buffer for', name); return null; }
+      try{
+        const src = audioContext.createBufferSource();
+        src.buffer = buffer;
+        src.loop = !!loop;
+        const gain = audioContext.createGain(); gain.gain.value = volume;
+        src.connect(gain); gain.connect(masterGain);
+        src.start();
+        if(!playingInstances[name]) playingInstances[name]=[];
+        const entry = { source: src, gain };
+        playingInstances[name].push(entry);
+        src.onended = () => {
+          const arr = playingInstances[name]; if(!arr) return; const idx = arr.indexOf(entry); if(idx>=0) arr.splice(idx,1); if(arr.length===0) delete playingInstances[name];
+        };
+        log('Playing sound', name);
+        return entry;
+      }catch(e){ log('Play error', e); return null; }
+    }
+
+    function stopSoundByName(name){ const arr = playingInstances[name]; if(!arr) return; arr.forEach(e=>{ try{ e.source.stop(); }catch(e){} }); delete playingInstances[name]; log('Stopped', name); }
+
+    function playMusicByName(name, {loop=true, volume=1} = {}){
+      if(currentMusic && currentMusic.name === name) return;
+      stopMusic();
+      const buffer = sounds[name]; if(!buffer){ log('No music buffer for', name); return null; }
+      try{
+        const src = audioContext.createBufferSource(); src.buffer = buffer; src.loop = !!loop; const gain = audioContext.createGain(); gain.gain.value = volume; src.connect(gain); gain.connect(musicGain); src.start(); currentMusic = { name, source: src, gain }; src.onended = ()=>{ if(currentMusic && currentMusic.source === src) currentMusic=null; }; log('Music started', name); return currentMusic; } catch(e){ log('Music play error', e); return null; }
+    }
+    function stopMusic(){ if(!currentMusic) return; try{ currentMusic.source.stop(); }catch(e){} currentMusic=null; log('Music stopped'); }
+
+    function isSoundPlaying(name){ return !!((playingInstances[name] && playingInstances[name].length>0) || (currentMusic && currentMusic.name === name)); }
+
+    function setMasterVolume(v){ masterGain.gain.value = Math.max(0, Math.min(1, v)); }
+
+    // Create a small sine AudioBuffer (0.6s) and register as 'sine'
+    const sounds = {};
+    (function synthesize(){
+      const sr = audioContext.sampleRate;
+      const dur = 0.6;
+      const len = Math.floor(sr * dur);
+      const buf = audioContext.createBuffer(1, len, sr);
+      const data = buf.getChannelData(0);
+      const freq = 880;
+      for(let i=0;i<len;i++){
+        const t = i/sr;
+        data[i] = 0.25 * Math.sin(2*Math.PI*freq*t) * Math.exp(-3*t);
+      }
+      sounds['sine'] = buf;
+      log('Synthesized buffer sine (0.6s)');
+    })();
+
+    document.getElementById('resume').addEventListener('click', ()=>{ resumeAudio(); log('Resume clicked'); });
+    document.getElementById('play-sound').addEventListener('click', ()=> playSoundByName('sine', {loop:false, volume:1}));
+    document.getElementById('stop-sound').addEventListener('click', ()=> stopSoundByName('sine'));
+    document.getElementById('play-music').addEventListener('click', ()=> playMusicByName('sine', {loop:true, volume:0.5}));
+    document.getElementById('stop-music').addEventListener('click', ()=> stopMusic());
+    document.getElementById('check-sound').addEventListener('click', ()=> log('is playing?', isSoundPlaying('sine')));
+    document.getElementById('master').addEventListener('input', (e)=>{ setMasterVolume(Number(e.target.value)); log('Master volume', e.target.value); });
+    document.getElementById('music').addEventListener('input', (e)=>{ musicGain.gain.value = Number(e.target.value); log('Music volume', e.target.value); });
+
+    log('Demo ready. Click Resume / Play.');
+  </script>
+</body>
+</html>
