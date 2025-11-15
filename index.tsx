@@ -1,18 +1,7 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import LandingPage from './components/LandingPage';
-
-const Root: React.FC = () => {
-    const [showEngine, setShowEngine] = useState(false);
-
-    if (showEngine) {
-        return <App />;
-    }
-
-    return <LandingPage onEnter={() => setShowEngine(true)} />;
-};
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -22,6 +11,6 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <Root />
+    <App />
   </React.StrictMode>
 );
